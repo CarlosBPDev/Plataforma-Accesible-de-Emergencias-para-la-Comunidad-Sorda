@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Perfil - logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g1:#003d22;--g2:#004a2b;--g3:#006338;--g4:#008548;
+  --gl:#d4ede0;--g50:#f0f7f3;--w:#ffffff;
+  --shadow:0 4px 20px rgba(0,40,20,.08);
+  --shadow-lg:0 8px 40px rgba(0,40,20,.14);
+  --radius:16px;--radius-lg:24px
+}
+html,body{height:100%}
+body{
+  font-family:'DM Sans',-apple-system,sans-serif;
+  background:linear-gradient(170deg,var(--g50) 0%,var(--w) 100%);
+  color:var(--g2);
+  -webkit-tap-highlight-color:transparent;
+  display:flex;flex-direction:column;min-height:100vh
+}
+header{
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  padding:16px 20px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;z-index:10
+}
+header a{color:var(--w);display:flex;transition:opacity .2s}
+header a:active{opacity:.6}
+header .logo{font-size:20px;font-weight:900;letter-spacing:-.5px;color:var(--w);opacity:.9}
+.content{flex:1;overflow-y:auto;padding:28px 20px 100px;max-width:420px;margin:0 auto;width:100%}
+.avatar-wrap{
+  width:96px;height:96px;border-radius:50%;
+  margin:0 auto 28px;
+  background:linear-gradient(135deg,var(--g3),var(--g4));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,99,56,.25);
+  position:relative
+}
+.avatar-wrap svg{width:48px;height:48px;color:var(--w);opacity:.9}
+.field{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 14px;margin-bottom:2px;
+  background:var(--w);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid rgba(0,99,56,.06);
+  transition:border-color .2s
+}
+.field:focus-within{border-color:var(--g3)}
+.field svg{width:20px;height:20px;opacity:.35;flex-shrink:0}
+.field .input{flex:1}
+.field .input .val{font-size:14px;font-weight:600;line-height:1.3}
+.field .input .hint{font-size:10px;text-transform:uppercase;letter-spacing:.8px;opacity:.4;font-weight:500}
+.field .input input{
+  width:100%;border:none;outline:none;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;color:var(--g2);
+  background:transparent;padding:0
+}
+.field .input input::placeholder{color:var(--g2);opacity:.3;font-weight:500}
+.section-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--g2);opacity:.45;margin:24px 0 10px
+}
+.section-title svg{width:16px;height:16px}
+.save-btn{
+  width:100%;padding:16px;border:none;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  color:var(--w);font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  cursor:pointer;margin-top:28px;
+  transition:transform .15s,box-shadow .2s;
+  box-shadow:0 4px 16px rgba(0,99,56,.3);
+  -webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;gap:10px
+}
+.save-btn:active{transform:scale(.97);box-shadow:0 2px 8px rgba(0,99,56,.2)}
+.save-btn svg{width:18px;height:18px}
+.add-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--w);border:2px dashed var(--g3);
+  color:var(--g3);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;margin:14px auto 0;
+  transition:all .2s;-webkit-tap-highlight-color:transparent
+}
+.add-btn:active{background:var(--g3);color:var(--w);border-style:solid;transform:scale(.92)}
+.add-btn svg{width:22px;height:22px}
+body.swal-blur .content,body.swal-blur header,body.swal-blur .bottom-nav{
+  filter:blur(4px);transition:filter .3s
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.bottom-nav{
+  background:var(--w);
+  border-top:1px solid rgba(0,99,56,.08);
+  display:flex;padding:6px 0 env(safe-area-inset-bottom,6px) 0;
+  position:fixed;bottom:0;left:0;right:0;z-index:30
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 4px 4px;text-decoration:none;color:var(--g2);opacity:.4;
+  transition:opacity .2s;position:relative
+}
+.nav-item.active{opacity:1}
+.nav-item.active::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:24px;height:3px;background:linear-gradient(90deg,var(--g3),var(--g4));
+  border-radius:0 0 4px 4px
+}
+.nav-item svg{width:22px;height:22px}
+.nav-item span{font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M5 12h14"/><path d="M5 12l6-6"/><path d="M5 12l6 6"/></svg></a>
+  <div class="logo">logo</div>
+  <div style="width:24px"></div>
+</header>
+
+<div class="content">
+  <div class="avatar-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M6.17 18a6 6 0 0 1 11.66 0"/></svg>
+  </div>
+
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V7a5 5 0 0 1 10 0"/><path d="M12 14a8 8 0 0 1-8-8"/><path d="M12 18a12 12 0 0 1-12-12"/></svg>
+    <div class="input">
+      <div class="hint">RUT</div>
+      <input type="text" placeholder="XX.XXX.XXX-X" value="20.123.456-7">
+    </div>
+  </div>
+
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+    <div class="input">
+      <div class="hint">Nombre</div>
+      <input type="text" placeholder="Nombre completo" value="Ignacio Barra">
+    </div>
+  </div>
+
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+    <div class="input">
+      <div class="hint">Direccion</div>
+      <input type="text" placeholder="Direccion habitual" value="Av. Siempre Viva 123">
+    </div>
+  </div>
+
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+    Contacto emergencia
+  </div>
+
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+    <div class="input">
+      <div class="hint">Nombre</div>
+      <input type="text" placeholder="Contacto emergencia" value="Maria Gonzalez">
+    </div>
+  </div>
+
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.27 1 .6 2 .95 2.82a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.82.35 1.82.68 2.82.95A2 2 0 0 1 22 16.92z"/></svg>
+    <div class="input">
+      <div class="hint">Telefono</div>
+      <input type="tel" placeholder="+56 9 XXXX XXXX" value="+56 9 8765 4321">
+    </div>
+  </div>
+
+  <button class="add-btn" id="addContactBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <button class="save-btn" id="saveBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+    Guardar
+  </button>
+</div>
+
+<nav class="bottom-nav">
+  <a href="../index.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12H3l9-9 9 9h-2"/><path d="M9 21V9h6v12"/></svg>
+    <span>Home</span>
+  </a>
+  <a href="seguimiento.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12l2 2 4-4"/><path d="M20 12a8 8 0 1 1-3.7-6.77"/><path d="M21 3v5h-5"/></svg>
+    <span>Seguir</span>
+  </a>
+  <a href="perfil.html" class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M6.17 18a6 6 0 0 1 11.66 0"/></svg>
+    <span>Perfil</span>
+  </a>
+</nav>
+
+<script>
+(function(){
+  var contactCount=1;
+  document.getElementById('saveBtn').addEventListener('click',function(){
+    var btn=this;
+    btn.textContent='Guardado';
+    btn.style.opacity='.7';
+    setTimeout(function(){
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M5 12l5 5L20 7"/></svg> Guardar';
+      btn.style.opacity='1';
+    },1500);
+  });
+  document.getElementById('addContactBtn').addEventListener('click',function(){
+    contactCount++;
+    var html='<div class="field" style="animation:fadeIn .3s">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="opacity:.35;flex-shrink:0"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>'+
+      '<div class="input"><div class="hint">Nombre '+(contactCount+1)+'</div><input type="text" placeholder="Contacto emergencia"></div></div>'+
+      '<div class="field" style="animation:fadeIn .3s">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="opacity:.35;flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.27 1 .6 2 .95 2.82a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.82.35 1.82.68 2.82.95A2 2 0 0 1 22 16.92z"/></svg>'+
+      '<div class="input"><div class="hint">Telefono</div><input type="tel" placeholder="+56 9 XXXX XXXX"></div></div>';
+    this.insertAdjacentHTML('beforebegin',html);
+    this.style.transform='rotate(45deg)';
+    setTimeout(function(){this.style.transform='rotate(0)'}.bind(this),300);
+  });
+})();
+</script>
+</body>
+</html>
