@@ -14,6 +14,8 @@
 .sign-image-area.fade{opacity:0}
 .answers-grid{transition:opacity .2s}
 .answers-grid.fade{opacity:0;transform:translateY(8px)}
+.answer-card .a-img img{transition:transform .3s}
+.answer-card:hover .a-img img{transform:scale(1.08)}
 </style>
 </head>
 <body>
@@ -93,30 +95,30 @@
       label: "\u00bfD\u00f3nde est\u00e1s?",
       image: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=400&h=300&fit=crop&auto=format",
       answers: [
-        { id:"a1", label:"Casa" },
-        { id:"a2", label:"Calle" },
-        { id:"a3", label:"Trabajo" },
-        { id:"a4", label:"Otro" }
+        { id:"a1", label:"Casa", img:"https://images.unsplash.com/photo-1590650046871-92c887180603?w=120&h=120&fit=crop&auto=format" },
+        { id:"a2", label:"Calle", img:"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120&h=120&fit=crop&auto=format" },
+        { id:"a3", label:"Trabajo", img:"https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&h=120&fit=crop&auto=format" },
+        { id:"a4", label:"Otro", img:"https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=120&h=120&fit=crop&auto=format" }
       ]
     },
     {
       label: "\u00bfEst\u00e1 armado?",
       image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=300&fit=crop&auto=format",
       answers: [
-        { id:"b1", label:"S\u00ed" },
-        { id:"b2", label:"No" },
-        { id:"b3", label:"No s\u00e9" },
-        { id:"b4", label:"Probable" }
+        { id:"b1", label:"S\u00ed", img:"https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=120&h=120&fit=crop&auto=format" },
+        { id:"b2", label:"No", img:"https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=120&h=120&fit=crop&auto=format" },
+        { id:"b3", label:"No s\u00e9", img:"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120&h=120&fit=crop&auto=format" },
+        { id:"b4", label:"Probable", img:"https://images.unsplash.com/photo-1590650046871-92c887180603?w=120&h=120&fit=crop&auto=format" }
       ]
     },
     {
       label: "\u00bfQu\u00e9 arma?",
       image: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&h=300&fit=crop&auto=format",
       answers: [
-        { id:"c1", label:"Blanca" },
-        { id:"c2", label:"Fuego" },
-        { id:"c3", label:"Otra" },
-        { id:"c4", label:"Ninguna" }
+        { id:"c1", label:"Blanca", img:"https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&h=120&fit=crop&auto=format" },
+        { id:"c2", label:"Fuego", img:"https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=120&h=120&fit=crop&auto=format" },
+        { id:"c3", label:"Otra", img:"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120&h=120&fit=crop&auto=format" },
+        { id:"c4", label:"Ninguna", img:"https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=120&h=120&fit=crop&auto=format" }
       ]
     }
   ];
@@ -162,7 +164,7 @@
         card.className = 'answer-card';
         if(selected[currentStep]===a.id) card.classList.add('selected');
         card.innerHTML =
-          '<div class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="2.5"/><circle cx="12" cy="16" r="2.5"/></svg></div>'+
+          '<div class="a-img"><img src="'+a.img+'" alt="'+a.label+' en lengua de se\u00f1as" loading="lazy"></div>'+
           '<span class="a-label">'+a.label+'</span>';
         card.addEventListener('click', (function(id){return function(){selectAnswer(id);};})(a.id));
         answersGrid.appendChild(card);
