@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { useAlertStore } from '../stores/alertStore'
 
 const router = useRouter()
+const store = useAlertStore()
 
 // Variable reactiva para el estado de la conexión
 const isOnline = ref(navigator.onLine)
@@ -12,13 +14,27 @@ const updateOnlineStatus = () => {
   isOnline.value = navigator.onLine
 }
 
+// Lógica de "autodestrucción" al salir de la pantalla de éxito
+// Esto borra todo rastro de la emergencia actual para proteger al usuario
+const autodestruccion = () => {
+  store.resetAlerta()
+  localStorage.clear()
+  sessionStorage.clear()
+}
+
 // Configuración de listeners de eventos de red
 onMounted(() => {
   window.addEventListener('online', updateOnlineStatus)
   window.addEventListener('offline', updateOnlineStatus)
 })
 
-// Limpieza de listeners al desmontar el componente para evitar fugas de memoria
+// Hook de Vue Router para ejecutar la limpieza antes de cambiar de ruta
+onBeforeRouteLeave((to, from) => {
+  autodestruccion()
+  return true
+})
+
+// Limpieza de listeners al desmontar el componente
 onUnmounted(() => {
   window.removeEventListener('online', updateOnlineStatus)
   window.removeEventListener('offline', updateOnlineStatus)
