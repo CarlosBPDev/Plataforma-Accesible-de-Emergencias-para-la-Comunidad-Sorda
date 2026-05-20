@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -11,27 +11,34 @@ const props = defineProps({
 
 const emit = defineEmits(['select'])
 
-// Detecta si el dispositivo usa táctil como entrada principal (hover no funciona)
-const isTouchDevice = matchMedia('(hover: none)').matches
-// En móvil, primer toque muestra GIF, segundo navega
+const isTouchDevice = matchMedia('(hover: none)').matches || 'ontouchstart' in window
 const previewed = ref(false)
 
 function handleClick() {
   if (isTouchDevice && props.gif_lsch && !previewed.value) {
-    // Móvil, primer toque: mostrar GIF, no navegar
     previewed.value = true
     return
   }
-  // Desktop (hover ya mostró el GIF por CSS) o segundo toque en móvil
   emit('select', props.id)
 }
 
-// Cuando se toca fuera de la tarjeta en móvil, resetea la preview
-function handleBlur() {
-  if (isTouchDevice) {
+function onClickOutside(e) {
+  if (previewed.value && !e.target.closest('.triage-card')) {
     previewed.value = false
   }
 }
+
+onMounted(() => {
+  if (isTouchDevice) {
+    document.addEventListener('click', onClickOutside)
+  }
+})
+
+onUnmounted(() => {
+  if (isTouchDevice) {
+    document.removeEventListener('click', onClickOutside)
+  }
+})
 </script>
 
 <template>
@@ -40,16 +47,13 @@ function handleBlur() {
     :style="{ '--card-color': color }"
     :class="{ 'is-previewed': previewed }"
     @click="handleClick"
-    @blur="handleBlur"
     :aria-label="`Seleccionar emergencia: ${titulo}`"
   >
-    <!-- GIF de LSCh (visible por hover en desktop, o por clase is-previewed en móvil) -->
     <div v-show="gif_lsch" class="gif-container">
       <img :src="gif_lsch" :alt="`Seña LSCh de ${titulo}`" />
       <span v-if="previewed" class="tap-hint">Toca de nuevo para seleccionar</span>
     </div>
 
-    <!-- Vista normal: icono SVG + título -->
     <div class="card-inner">
       <div class="icon-container">
         <svg v-if="icono === 'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -96,8 +100,7 @@ function handleBlur() {
   outline: none;
 }
 
-.triage-card:hover,
-.triage-card:focus {
+.triage-card:hover {
   border-color: var(--card-color);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   transform: translateY(-3px);
@@ -107,7 +110,6 @@ function handleBlur() {
   transform: scale(0.94);
 }
 
-/* GIF oculto por defecto */
 .gif-container {
   display: none;
   position: absolute;
@@ -119,12 +121,10 @@ function handleBlur() {
   border-radius: var(--radius);
   overflow: hidden;
   z-index: 2;
+  pointer-events: none;
 }
 
-/* Desktop: hover muestra el GIF */
 .triage-card:hover .gif-container,
-.triage-card:focus .gif-container,
-/* Móvil: clase is-previewed muestra el GIF tras primer toque */
 .triage-card.is-previewed .gif-container {
   display: flex;
 }
