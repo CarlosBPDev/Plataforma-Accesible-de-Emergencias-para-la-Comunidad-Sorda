@@ -1,0 +1,42 @@
+export const mockHistory = [
+  {
+    id: 5,
+    tipo: 'Violencia',
+    fecha: '2026-05-15T10:23:00',
+    fechaLabel: '15 may 2026 · 10:23',
+    pasoActual: 3,
+    color: '#c62828',
+  },
+  {
+    id: 4,
+    tipo: 'Robo',
+    fecha: '2026-05-12T14:32:00',
+    fechaLabel: '12 may 2026 · 14:32',
+    pasoActual: 2,
+    color: '#f57c00',
+  },
+  {
+    id: 3,
+    tipo: 'Accidente',
+    fecha: '2026-05-08T09:15:00',
+    fechaLabel: '8 may 2026 · 09:15',
+    pasoActual: 1,
+    color: '#1565c0',
+  },
+  {
+    id: 2,
+    tipo: 'Otra',
+    fecha: '2026-05-05T18:40:00',
+    fechaLabel: '5 may 2026 · 18:40',
+    pasoActual: 0,
+    color: '#6b6b6b',
+  },
+  {
+    id: 1,
+    tipo: 'Violencia',
+    fecha: '2026-05-02T22:10:00',
+    fechaLabel: '2 may 2026 · 22:10',
+    pasoActual: 3,
+    color: '#c62828',
+  },
+]
