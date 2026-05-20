@@ -11,14 +11,26 @@ const props = defineProps({
 
 const emit = defineEmits(['select'])
 
-const isActive = ref(false)
+// Detecta si el dispositivo usa táctil como entrada principal (hover no funciona)
+const isTouchDevice = matchMedia('(hover: none)').matches
+// En móvil, primer toque muestra GIF, segundo navega
+const previewed = ref(false)
 
-const handleInteraction = (state) => {
-  isActive.value = state
+function handleClick() {
+  if (isTouchDevice && props.gif_lsch && !previewed.value) {
+    // Móvil, primer toque: mostrar GIF, no navegar
+    previewed.value = true
+    return
+  }
+  // Desktop (hover ya mostró el GIF por CSS) o segundo toque en móvil
+  emit('select', props.id)
 }
 
-const handleClick = () => {
-  emit('select', props.id)
+// Cuando se toca fuera de la tarjeta en móvil, resetea la preview
+function handleBlur() {
+  if (isTouchDevice) {
+    previewed.value = false
+  }
 }
 </script>
 
@@ -26,43 +38,40 @@ const handleClick = () => {
   <button
     class="triage-card"
     :style="{ '--card-color': color }"
+    :class="{ 'is-previewed': previewed }"
     @click="handleClick"
-    @pointerenter="handleInteraction(true)"
-    @pointerleave="handleInteraction(false)"
-    @focus="handleInteraction(true)"
-    @blur="handleInteraction(false)"
+    @blur="handleBlur"
     :aria-label="`Seleccionar emergencia: ${titulo}`"
   >
-    <div class="card-inner">
-      <!-- GIF real de LSCh: se muestra al interactuar (hover/focus) -->
-      <div v-if="isActive && gif_lsch" class="gif-container">
-        <img :src="gif_lsch" :alt="`Seña LSCh de ${titulo}`" />
-      </div>
+    <!-- GIF de LSCh (visible por hover en desktop, o por clase is-previewed en móvil) -->
+    <div v-show="gif_lsch" class="gif-container">
+      <img :src="gif_lsch" :alt="`Seña LSCh de ${titulo}`" />
+      <span v-if="previewed" class="tap-hint">Toca de nuevo para seleccionar</span>
+    </div>
 
-      <!-- Vista normal: icono SVG + título -->
-      <template v-else>
-        <div class="icon-container">
-          <svg v-if="icono === 'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3z" />
-          </svg>
-          <svg v-else-if="icono === 'lock'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="5" y="11" width="14" height="10" rx="2" />
-            <circle cx="12" cy="16" r="1" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-          <svg v-else-if="icono === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v12M6 12h12" />
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="8" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="12" cy="16" r="1.5" />
-          </svg>
-        </div>
-        <span class="card-label">{{ titulo }}</span>
-      </template>
+    <!-- Vista normal: icono SVG + título -->
+    <div class="card-inner">
+      <div class="icon-container">
+        <svg v-if="icono === 'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3z" />
+        </svg>
+        <svg v-else-if="icono === 'lock'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <circle cx="12" cy="16" r="1" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+        <svg v-else-if="icono === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v12M6 12h12" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="8" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="16" r="1.5" />
+        </svg>
+      </div>
+      <span class="card-label">{{ titulo }}</span>
     </div>
   </button>
 </template>
@@ -98,6 +107,48 @@ const handleClick = () => {
   transform: scale(0.94);
 }
 
+/* GIF oculto por defecto */
+.gif-container {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* Desktop: hover muestra el GIF */
+.triage-card:hover .gif-container,
+.triage-card:focus .gif-container,
+/* Móvil: clase is-previewed muestra el GIF tras primer toque */
+.triage-card.is-previewed .gif-container {
+  display: flex;
+}
+
+.gif-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tap-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--on-surface);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
 .card-inner {
   width: 100%;
   height: 100%;
@@ -108,23 +159,6 @@ const handleClick = () => {
   gap: 10px;
   pointer-events: none;
   padding: 20px 16px 16px;
-}
-
-.gif-container {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.gif-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .icon-container {
