@@ -84,6 +84,20 @@ Se usa `<transition name="fade" mode="out-in">` envolviendo `<router-view />` en
 - `user-select: none` — sin selección de texto con el dedo
 - `-webkit-tap-highlight-color: transparent` — sin destello azul al tocar elementos
 
+## Seguridad y Privacidad (VIF)
+
+### Autodestrucción de rastro
+Al salir de la pantalla de **Éxito** (`/exito`), la aplicación ejecuta un protocolo de limpieza automática:
+- Se resetea el store de Pinia (`resetAlerta`).
+- Se limpia completamente el `localStorage` y `sessionStorage`.
+Esto asegura que si un agresor revisa el teléfono después de la emergencia, no encontrará datos sobre la alerta enviada.
+
+### Simulador Offline
+La pantalla de éxito detecta en tiempo real cambios en la conectividad:
+- **Online:** Interfaz verde de confirmación.
+- **Offline:** Interfaz amarilla de advertencia con aviso de envío vía SMS.
+Esto garantiza que el usuario siempre sepa el estado real de su petición de ayuda.
+
 ## Cómo Ejecutar
 
 ```bash

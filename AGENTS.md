@@ -85,6 +85,11 @@ Siempre usar `<script setup>` con Composition API. Orden de bloques:
 - Arrays de datos en `src/data/` (ej. `emergencias.js`)
 - Se renderizan con `v-for`, nunca hardcodear tarjetas en el template
 
+### Seguridad (VIF)
+
+- **Protocolo de limpieza**: Al navegar fuera de `/exito`, se debe llamar a `resetAlerta()` y limpiar el almacenamiento local (`localStorage.clear()`).
+- **Feedback de red**: Usar `navigator.onLine` para adaptar la UI en pasos críticos (como la confirmación de envío).
+
 ### CSS
 
 - Variables CSS en `:root` para colores, spacing y tipografía
