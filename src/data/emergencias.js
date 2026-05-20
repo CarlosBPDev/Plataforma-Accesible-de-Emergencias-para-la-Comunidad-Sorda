@@ -7,7 +7,7 @@ export const emergencias = [
     icono: 'shield',
     color: '#c62828',
     description: 'Situación de violencia o agresión',
-    gif_lsch: '' // URL del GIF de Lengua de Señas Chilena
+    gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 'robo',
@@ -15,7 +15,7 @@ export const emergencias = [
     icono: 'lock',
     color: '#f57c00',
     description: 'Robo o hurto en curso',
-    gif_lsch: ''
+    gif_lsch: '/lsch/emergencia.gif'
   },
   {
     id: 'accidente',
@@ -23,7 +23,7 @@ export const emergencias = [
     icono: 'warning',
     color: '#1565c0',
     description: 'Accidente de tránsito o laboral',
-    gif_lsch: ''
+    gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 'otra',
@@ -31,6 +31,6 @@ export const emergencias = [
     icono: 'dots',
     color: '#6b6b6b',
     description: 'Otro tipo de emergencia',
-    gif_lsch: ''
+    gif_lsch: '/lsch/peligro.gif'
   },
 ]
