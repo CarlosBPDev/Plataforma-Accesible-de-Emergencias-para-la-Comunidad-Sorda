@@ -12,6 +12,9 @@ const perfil = reactive({
 function guardar() {
   localStorage.setItem('perfil', JSON.stringify(perfil))
 }
+
+// Expone perfil a la consola para depuración (DevTools)
+window.$perfil = perfil
 </script>
 
 <template>
