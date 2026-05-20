@@ -36,6 +36,7 @@ onBeforeRouteLeave((to, from) => {
 
 // Limpieza de listeners al desmontar el componente
 onUnmounted(() => {
+  autodestruccion()
   window.removeEventListener('online', updateOnlineStatus)
   window.removeEventListener('offline', updateOnlineStatus)
 })
