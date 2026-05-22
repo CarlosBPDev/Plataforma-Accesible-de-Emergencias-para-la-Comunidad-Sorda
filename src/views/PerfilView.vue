@@ -1,12 +1,36 @@
 <script setup>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed, ref, onMounted } from 'vue'
+import { useAlertStore } from '../stores/alertStore'
+
+const store = useAlertStore()
 
 const perfil = reactive({
   rut: '',
   nombre: '',
   telefono: '',
+  direccion: '',
   contacto_nombre: '',
   contacto_telefono: '',
+})
+
+onMounted(() => {
+  perfil.rut = store.perfil.rut
+  perfil.nombre = store.perfil.nombre
+  perfil.telefono = store.perfil.telefono
+  perfil.direccion = store.perfil.direccion
+  perfil.contacto_nombre = store.perfil.contacto_nombre
+  perfil.contacto_telefono = store.perfil.contacto_telefono
+  if (!perfil.rut && localStorage.getItem('perfil')) {
+    try {
+      const data = JSON.parse(localStorage.getItem('perfil'))
+      perfil.rut = data.rut || ''
+      perfil.nombre = data.nombre || ''
+      perfil.telefono = data.telefono || ''
+      perfil.contacto_nombre = data.contacto_nombre || ''
+      perfil.contacto_telefono = data.contacto_telefono || ''
+      perfil.direccion = data.direccion || ''
+    } catch {}
+  }
 })
 
 const rutBlurred = ref(false)
@@ -37,8 +61,32 @@ function onRutInput(e) {
   }
 }
 
+function formatearTelefono(raw) {
+  const limpio = raw.replace(/[^0-9+]/g, '')
+  if (limpio.startsWith('+56')) {
+    const nums = limpio.replace(/[^0-9]/g, '').slice(2)
+    const a = nums.slice(0, 1)
+    const b = nums.slice(1, 5)
+    const c = nums.slice(5, 9)
+    return `+56 ${a}${b ? ' ' + b : ''}${c ? ' ' + c : ''}`.trim()
+  }
+  const nums = limpio.replace(/[^0-9]/g, '')
+  const a = nums.slice(0, 1)
+  const b = nums.slice(1, 5)
+  const c = nums.slice(5, 9)
+  return `${a}${b ? ' ' + b : ''}${c ? ' ' + c : ''}`.trim()
+}
+
+function onTelefonoInput(e) {
+  perfil.telefono = formatearTelefono(e.target.value)
+}
+
+function onContactoTelefonoInput(e) {
+  perfil.contacto_telefono = formatearTelefono(e.target.value)
+}
+
 function guardar() {
-  localStorage.setItem('perfil', JSON.stringify(perfil))
+  store.actualizarPerfil({ ...perfil })
 }
 
 function onRutBlur() {
@@ -48,14 +96,12 @@ function onRutBlur() {
 function onNombreBlur() {
   nombreBlurred.value = true
 }
-
-window.$perfil = perfil
 </script>
 
 <template>
   <div class="page perfil">
     <header class="perfil-header">
-      <router-link to="/" class="back-btn" aria-label="Volver al inicio">
+      <router-link to="/victim" class="back-btn" aria-label="Volver al inicio">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5" />
           <path d="M12 19l-7-7 7-7" />
@@ -67,6 +113,30 @@ window.$perfil = perfil
     <p class="perfil-desc">Tus datos personales se usarán al enviar una alerta.</p>
 
     <form class="perfil-form" @submit.prevent="guardar">
+      <label class="form-group gps-group">
+        <span class="form-label">
+          <svg class="gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10" />
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 8V2" />
+            <path d="M2 12h6" />
+            <circle cx="12" cy="12" r="10" fill="none" />
+          </svg>
+          Ubicación actual
+        </span>
+        <input
+          name="direccion"
+          v-model="perfil.direccion"
+          type="text"
+          placeholder="Av. Principal #123, Santiago"
+          autocomplete="street-address"
+        />
+        <span class="gps-hint">
+          <span class="gps-dot"></span>
+          GPS activo — seleccionando ubicación actual
+        </span>
+      </label>
+
       <label class="form-group">
         <span class="form-label">RUT</span>
         <input
@@ -100,7 +170,8 @@ window.$perfil = perfil
         <span class="form-label">Teléfono</span>
         <input
           name="telefono"
-          v-model="perfil.telefono"
+          :value="perfil.telefono"
+          @input="onTelefonoInput"
           type="tel"
           inputmode="numeric"
           placeholder="+56 9 1234 5678"
@@ -124,7 +195,8 @@ window.$perfil = perfil
         <span class="form-label">Teléfono del contacto</span>
         <input
           name="contacto_telefono"
-          v-model="perfil.contacto_telefono"
+          :value="perfil.contacto_telefono"
+          @input="onContactoTelefonoInput"
           type="tel"
           inputmode="numeric"
           placeholder="+56 9 1234 5678"
@@ -239,5 +311,48 @@ window.$perfil = perfil
 
 .save-btn:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+.gps-group .form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gps-icon {
+  width: 18px;
+  height: 18px;
+  color: #1565c0;
+}
+
+.gps-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  margin-top: 2px;
+}
+
+.gps-hint svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.gps-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: gps-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes gps-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
 }
 </style>
