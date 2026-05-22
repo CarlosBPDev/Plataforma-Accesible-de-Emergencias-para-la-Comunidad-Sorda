@@ -1,12 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '../stores/alertStore'
 import { emergencias } from '../data/emergencias'
 import TriageCard from '../components/TriageCard.vue'
+import SafeCalculatorOverlay from '../components/SafeCalculatorOverlay.vue'
 
 const router = useRouter()
 const store = useAlertStore()
+const mostrarCalculadora = ref(false)
 
 // Al montar el Home, nos aseguramos de resetear cualquier estado previo.
 // Esto cumple con el criterio de aceptación de evitar fugas de estado al volver a /.
@@ -27,7 +29,7 @@ function handleSelect(id) {
   <div class="page home">
     <header class="home-header">
       <h1>Emergencias</h1>
-      <router-link to="/perfil" class="icon-btn" aria-label="Ir a perfil">
+      <router-link to="/victim/perfil" class="icon-btn" aria-label="Ir a perfil">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10" />
           <circle cx="12" cy="10" r="3" />
@@ -86,7 +88,7 @@ function handleSelect(id) {
       Última actividad
     </div>
 
-    <router-link to="/historial" class="alert-mini">
+    <router-link to="/victim/historial" class="alert-mini">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3z" />
       </svg>
@@ -96,8 +98,13 @@ function handleSelect(id) {
       </div>
       <div class="a-badge">Finalizada</div>
     </router-link>
+    <button class="ocultar-mini" @click="mostrarCalculadora = true">
+      Ocultar
+    </button>
   </div>
 </template>
+
+<SafeCalculatorOverlay v-model="mostrarCalculadora" />
 
 <style scoped>
 .home-header {
@@ -238,6 +245,19 @@ function handleSelect(id) {
   width: 24px;
   height: 24px;
   color: var(--on-surface-muted);
+}
+
+.ocultar-mini {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #222;
+  border-radius: var(--radius);
+  background: #222;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .a-info {

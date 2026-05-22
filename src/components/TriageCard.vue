@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
-  id: { type: String, required: true },
+  id: { type: [String, Number], required: true },
   titulo: { type: String, required: true },
   icono: { type: String, required: true },
   color: { type: String, default: '#6b6b6b' },

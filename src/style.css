@@ -61,11 +61,7 @@ body {
    Estilos base para las vistas
    ============================================ */
 #app {
-  max-width: 480px;
-  margin: 0 auto;
   min-height: 100vh;
-  background: var(--surface);
-  box-shadow: var(--shadow);
 }
 
 .page {
