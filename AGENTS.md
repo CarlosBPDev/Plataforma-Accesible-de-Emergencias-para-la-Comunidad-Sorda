@@ -93,6 +93,76 @@ Siempre usar `<script setup>` con Composition API. Orden de bloques:
 - **GIFs de lengua de señas**: Siempre que sea posible, usar GIFs reales de personas haciendo señas (LSCh) en lugar de ilustraciones genéricas. Los GIFs se reproducen al interactuar (hover/focus/tap), no al cargar la vista.
 - **Idioma de comentarios y documentación**: Español (para el equipo de desarrollo), pero la interfaz debe minimizar el uso de texto.
 
+### CentralView — Flujo del Operador
+
+- **Fondo blanco, letras negras**: sin dark theme, diseño funcional mínimo.
+- **Workflow obligatorio**:
+  1. El caso llega como `recibida`.
+  2. El operador **debe contactar al contacto de emergencia** antes de aceptar. Mientras no se presione "Contactado" o "Sin respuesta", el botón "Aceptar" está deshabilitado y se muestra un aviso amarillo.
+  3. Al aceptar, pasa a `aceptada`.
+  4. El operador puede **asignar múltiples carabineros** usando checkboxes + botón "Asignar".
+  5. Puede **contactar servicios externos** (Ambulancia 131, Bomberos 132) con toggle "He contactado".
+  6. El carabinero recibe toda esta info en PoliciaView.
+
+### casosStore — Esquema completo
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | string | ID único generado con timestamp + random |
+| `victimRut` | string | RUT de la víctima |
+| `victimNombre` | string | Nombre de la víctima |
+| `victimTelefono` | string | Teléfono de la víctima |
+| `victimContactoNombre` | string | Nombre del contacto de emergencia |
+| `victimContactoTelefono` | string | Teléfono del contacto de emergencia |
+| `contactoEstado` | string|null | `null` (pendiente), `'contactado'`, `'sin_respuesta'` |
+| `contactoNotas` | string | Notas del operador sobre la llamada al contacto |
+| `emergencia` | object | Objeto de emergencia (titulo, color, gif, etc.) |
+| `contexto` | object | `{ ubicacion, respuestas, preguntas }` |
+| `estado` | string | `recibida` → `aceptada` → `asignada` → `en_terreno` → `completada` |
+| `asignados` | string[] | Array de nombres de carabineros asignados |
+| `comisariaCercana` | string | Nombre de la comisaría más cercana (mockup basado en ubicación) |
+| `serviciosExternos` | array | `[{ servicio: 'Ambulancia 131', contactado: false }, { servicio: 'Bomberos 132', contactado: false }]` |
+| `notaOperador` | string | Nota escrita por el operador para el carabinero |
+| `preguntasTerrenoPendientes` | number[] | IDs de preguntas enviadas al terreno |
+| `respuestasTerreno` | object | Mapa `preguntaId → respuesta` recibido de la víctima |
+| `creadoEn` | ISO string | Fecha de creación |
+| `actualizadoEn` | ISO string | Última actualización |
+| `acta` | object|null | Acta del encuentro en terreno |
+
+### CasosStore — Migración desde schema anterior
+
+- `asignadoA` (string) → `asignados` (string[]), migración automática en `cargarCasos()`
+- `despacho` (string) → reemplazado por `serviciosExternos` (array de objetos)
+- Campos nuevos opcionales: `victimContactoNombre`, `victimContactoTelefono`, `contactoEstado`, `contactoNotas`, `comisariaCercana`, `serviciosExternos`
+
+### Comisaría Cercana (Mockup)
+
+`calcularComisaria(ubicacion)` en `casosStore.js` hace match por palabras clave en la dirección:
+
+| Palabra clave | Comisaría |
+|---|---|
+| providencia, santiago | 48° Comisaría |
+| ñuño | 14° Comisaría |
+| la florida | 47° Comisaría |
+| maipú | 52° Comisaría |
+| las condes, vitacura | 12° Comisaría |
+| independencia, recoleta | 3° Comisaría |
+| default | 48° Comisaría (cercanía estimada) |
+
+### CentralView — Asignación Múltiple de Carabineros
+
+- Los carabineros se muestran con checkboxes.
+- Se pueden seleccionar varios y asignar de golpe con "Asignar (N)".
+- Los ya asignados aparecen deshabilitados con badge "Asignado".
+- Se pueden remover individualmente con botón ✕.
+
+### CentralView — Servicios Externos
+
+- Dos servicios: **Ambulancia 131** y **Bomberos 132**.
+- Cada uno tiene un botón toggle "He contactado" que cambia de estado.
+- El estado se envía al carabinero (se muestra en PoliciaView detail).
+- Los números de emergencia chilenos se muestran como ayuda textual.
+
 ### Seguridad (VIF)
 
 - **Protocolo de limpieza (autodestrucción)**: Al salir de `/exito`, ejecutar `resetAlerta()`, `localStorage.clear()` y `sessionStorage.clear()` en `onUnmounted`. También en `onBeforeRouteLeave` como doble capa de seguridad. Todo en español.
