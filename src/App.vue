@@ -1,13 +1,18 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
 const navItems = [
-  { path: '/', name: 'Inicio', icon: 'home' },
-  { path: '/historial', name: 'Historial', icon: 'historial' },
-  { path: '/perfil', name: 'Perfil', icon: 'perfil' },
+  { path: '/victim', name: 'Inicio', icon: 'home' },
+  { path: '/victim/historial', name: 'Historial', icon: 'historial' },
+  { path: '/victim/perfil', name: 'Perfil', icon: 'perfil' },
 ]
+
+const isVictim = computed(() => route.path.startsWith('/victim'))
+const isCentral = computed(() => route.path.startsWith('/central'))
+const shellClass = computed(() => (isCentral.value ? 'full' : 'mobile'))
 
 function icono(tipo) {
   if (tipo === 'home') {
@@ -21,25 +26,27 @@ function icono(tipo) {
 </script>
 
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="fade" mode="out-in">
-      <component :is="Component" />
-    </transition>
-  </router-view>
-  <nav class="bottom-nav">
-    <router-link
-      v-for="item in navItems"
-      :key="item.path"
-      :to="item.path"
-      class="nav-item"
-      :class="{ active: route.path === item.path }"
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path :d="icono(item.icon)" />
-      </svg>
-      <span>{{ item.name }}</span>
-    </router-link>
-  </nav>
+  <div class="app-shell" :class="shellClass">
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+    <nav v-if="isVictim" class="bottom-nav">
+      <router-link
+        v-for="item in navItems"
+        :key="item.path"
+        :to="item.path"
+        class="nav-item"
+        :class="{ active: route.path === item.path }"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path :d="icono(item.icon)" />
+        </svg>
+        <span>{{ item.name }}</span>
+      </router-link>
+    </nav>
+  </div>
 </template>
 
 <style scoped>
@@ -57,6 +64,22 @@ function icono(tipo) {
   background: var(--surface);
   border-top: 2px solid var(--border);
   z-index: 100;
+}
+
+.app-shell.mobile {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.app-shell.full {
+  max-width: none;
+  margin: 0;
+  min-height: 100vh;
+  background: transparent;
+  box-shadow: none;
 }
 
 .nav-item {
