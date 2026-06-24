@@ -2,51 +2,81 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '../stores/alertStore'
+import { useCasosStore } from '../stores/casosStore'
 
 const router = useRouter()
-const store = useAlertStore()
+const alertStore = useAlertStore()
+const casosStore = useCasosStore()
 
 const respuestas = ref({})
-
 const currentStep = ref(0)
-const respuestaSeleccionada = ref(null)
+const isSubmitting = ref(false)
 
-const emergenciaActual = computed(() => store.emergenciaSeleccionada || { titulo: 'Emergencia', preguntas: [] })
-const preguntaActual = computed(() => emergenciaActual.value.preguntas?.[currentStep.value] || null)
-const esUltimoPaso = computed(() => currentStep.value === emergenciaActual.value.preguntas.length - 1)
+const emergenciasData = computed(() => alertStore.emergenciaSeleccionada || { titulo: 'Emergencia', preguntas: [] })
+const preguntaActual = computed(() => emergenciasData.value.preguntas?.[currentStep.value] || null)
+const esUltimoPaso = computed(() => currentStep.value === emergenciasData.value.preguntas.length - 1)
+
+const ultimoCaso = computed(() => {
+  const casos = casosStore.casos
+  return casos.length > 0 ? casos[casos.length - 1] : null
+})
 
 onMounted(() => {
-  if (!store.emergenciaSeleccionada) {
+  if (!alertStore.emergenciaSeleccionada) {
     router.push('/victim')
+    return
+  }
+  if (ultimoCaso.value?.respuestas) {
+    respuestas.value = { ...ultimoCaso.value.respuestas }
   }
 })
 
 function seleccionarRespuesta(opcion) {
-  respuestaSeleccionada.value = opcion
-  if (preguntaActual.value) {
-    respuestas.value[preguntaActual.value.id] = opcion
-  }
+  if (!preguntaActual.value) return
+  respuestas.value[preguntaActual.value.id] = opcion.texto || opcion
 }
 
 function pasoAnterior() {
   if (currentStep.value <= 0) return
   currentStep.value--
-  respuestaSeleccionada.value = respuestas.value[emergenciaActual.value.preguntas[currentStep.value]?.id] ?? null
+}
+
+async function handleFinalizar() {
+  if (isSubmitting.value) return
+  isSubmitting.value = true
+
+  if (!preguntaActual.value || !respuestas.value[preguntaActual.value.id]) {
+    isSubmitting.value = false
+    return
+  }
+
+  const caso = ultimoCaso.value
+  if (!caso) {
+    router.push('/victim')
+    return
+  }
+
+  const respuestasActualizadas = { ...respuestas.value }
+  casosStore.actualizarCaso(caso.id, {
+    contexto: {
+      ubicacion: alertStore.ubicacion || caso.contexto?.ubicacion || '',
+      respuestas: respuestasActualizadas,
+      preguntas: caso.contexto?.preguntas || {},
+    },
+    estado: 'aceptada',
+  })
+
+  await casosStore.enviarCasoAPI(caso.id)
+
+  router.push({ name: 'exito' })
 }
 
 function handleAvanzarFlujo() {
-  const preguntaId = emergenciaActual.value?.preguntas?.[currentStep.value]?.id
+  const preguntaId = preguntaActual.value?.id
   if (!preguntaId || !respuestas.value[preguntaId]) return
 
-  const preguntas = emergenciaActual.value?.preguntas || []
-  const totalPreguntas = preguntas.length
-
-  if (currentStep.value >= totalPreguntas - 1) {
-    store.setContexto({
-      ubicacion: store.ubicacion,
-      respuestas: { ...respuestas.value }
-    })
-    router.push({ name: 'exito' })
+  if (esUltimoPaso.value) {
+    handleFinalizar()
   } else {
     currentStep.value++
   }
@@ -63,38 +93,38 @@ function handleAvanzarFlujo() {
       </button>
       <div class="header-center-title">
         <span class="sub-dept">Carabineros de Chile</span>
-        <h1>{{ emergenciaActual.titulo }}</h1>
+        <h1>{{ emergenciasData.titulo }}</h1>
       </div>
       <img
         class="escudo-carabineros"
         src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Roundel_of_Carabineros_de_Chile.svg/250px-Roundel_of_Carabineros_de_Chile.svg.png"
-        alt="Carabineros de Chile"
+        alt="Carabineros"
       />
     </header>
 
     <main class="triage-body-scroll">
-      <template v-if="emergenciaActual.preguntas[currentStep]">
+      <template v-if="preguntaActual">
         <div class="question-visual-box">
           <img
-            v-if="emergenciaActual.preguntas[currentStep]?.gif || emergenciaActual.preguntas[currentStep]?.gif_lsch"
-            :src="emergenciaActual.preguntas[currentStep]?.gif || emergenciaActual.preguntas[currentStep]?.gif_lsch"
+            v-if="preguntaActual.gif || preguntaActual.gif_lsch"
+            :src="preguntaActual.gif || preguntaActual.gif_lsch"
             alt="Seña de la pregunta"
             class="triage-main-gif"
           />
-          <h2 class="question-text-title">{{ emergenciaActual.preguntas[currentStep]?.texto }}</h2>
+          <h2 class="question-text-title">{{ preguntaActual.texto }}</h2>
         </div>
 
         <div class="options-media-grid">
           <button
-            v-for="(opcion, index) in emergenciaActual.preguntas[currentStep]?.opciones"
+            v-for="(opcion, index) in preguntaActual.opciones"
             :key="index"
             type="button"
             class="option-card-button"
-            :class="{ 'is-selected': respuestas[emergenciaActual.preguntas[currentStep].id] === (opcion.texto || opcion) }"
-            @click="respuestas[emergenciaActual.preguntas[currentStep].id] = (opcion.texto || opcion)"
+            :class="{ 'is-selected': respuestas[preguntaActual.id] === (opcion.texto || opcion) }"
+            @click="seleccionarRespuesta(opcion)"
           >
             <img
-              :src="opcion.gif || opcion.gif_lsch || emergenciaActual.preguntas[currentStep]?.opciones_gifs?.[index] || emergenciaActual.preguntas[currentStep]?.gif || emergenciaActual.preguntas[currentStep]?.gif_lsch"
+              :src="opcion.gif || opcion.gif_lsch || preguntaActual.opciones_gifs?.[index] || preguntaActual.gif || preguntaActual.gif_lsch"
               alt="Seña de la opción"
               class="option-button-gif"
             />
@@ -115,7 +145,7 @@ function handleAvanzarFlujo() {
           <button
             v-if="!esUltimoPaso"
             class="nav-btn-next"
-            :disabled="!respuestas[emergenciaActual.preguntas[currentStep]?.id]"
+            :disabled="!respuestas[preguntaActual?.id]"
             @click="handleAvanzarFlujo"
           >
             <svg viewBox="0 0 320 512" fill="currentColor" stroke="none" style="width:20px;height:20px;display:block">
@@ -125,7 +155,7 @@ function handleAvanzarFlujo() {
           <button
             v-else
             class="nav-btn-submit"
-            :disabled="!respuestas[emergenciaActual.preguntas[currentStep]?.id]"
+            :disabled="!respuestas[preguntaActual?.id] || isSubmitting"
             @click="handleAvanzarFlujo"
           >
             <svg viewBox="0 0 448 512" fill="currentColor" stroke="none" style="width:20px;height:20px;display:block">
@@ -309,7 +339,6 @@ function handleAvanzarFlujo() {
   opacity: 0.35;
   cursor: not-allowed;
 }
-
 
 .contexto, .mobile-triage-container {
   font-family: 'Roboto', sans-serif !important;

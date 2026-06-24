@@ -1,131 +1,22 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '../stores/alertStore'
-import { useCasosStore } from '../stores/casosStore'
-import { connectGPSSocket, sendGPSUpdate, closeGPSSocket } from '../services/api.js'
+import { emergencias } from '../data/emergencias'
+import TriageCard from '../components/TriageCard.vue'
 import SafeCalculatorOverlay from '../components/SafeCalculatorOverlay.vue'
 
 const router = useRouter()
 const alertStore = useAlertStore()
-const casosStore = useCasosStore()
-
 const mostrarCalculadora = ref(false)
 const menuAbierto = ref(false)
-const presionando = ref(false)
-const escalaCortina = ref(0)
-const isLoading = ref(false)
-const tiempoPresion = ref(0)
-let conteoTimer = null
-let escalaTimer = null
-let tiempoTimer = null
-let gpsWatchId = null
-let gpsSocket = null
 
-onMounted(() => {
-  alertStore.resetAlerta()
-  iniciarGPS()
-})
-
-onUnmounted(() => {
-  clearTimeout(conteoTimer)
-  clearInterval(escalaTimer)
-  clearInterval(tiempoTimer)
-  closeGPSSocket()
-  if (gpsWatchId !== null) {
-    navigator.geolocation.clearWatch(gpsWatchId)
+function seleccionarEmergencia(id) {
+  const emergencia = emergencias.find(e => e.id === id)
+  if (emergencia) {
+    alertStore.setEmergencia(emergencia)
+    router.push({ name: 'contexto' })
   }
-})
-
-function iniciarGPS() {
-  if (!navigator.geolocation) return
-  gpsWatchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const lat = pos.coords.latitude
-      const lng = pos.coords.longitude
-      alertStore.setUbicacion(`${lat.toFixed(6)}, ${lng.toFixed(6)}`, lat, lng)
-    },
-    () => {},
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  )
-}
-
-function iniciarPresionCortina(e) {
-  e.preventDefault()
-  presionando.value = true
-  escalaCortina.value = 0
-  tiempoPresion.value = 0
-
-  const incremento = 2500 / (4000 / 16)
-
-  tiempoTimer = setInterval(() => {
-    tiempoPresion.value = Math.min(tiempoPresion.value + 0.05, 4)
-  }, 50)
-
-  escalaTimer = setInterval(() => {
-    if (escalaCortina.value < 2500) {
-      escalaCortina.value += incremento
-    }
-  }, 16)
-
-  conteoTimer = setTimeout(() => {
-    clearInterval(escalaTimer)
-    clearInterval(tiempoTimer)
-    clearTimeout(conteoTimer)
-    presionando.value = false
-    escalaCortina.value = 0
-    tiempoPresion.value = 0
-    enviarPanico()
-  }, 4000)
-}
-
-function cancelarPresionCortina() {
-  if (presionando.value) {
-    presionando.value = false
-    escalaCortina.value = 0
-    tiempoPresion.value = 0
-    clearTimeout(conteoTimer)
-    clearInterval(escalaTimer)
-    clearInterval(tiempoTimer)
-  }
-}
-
-async function enviarPanico() {
-  if (isLoading.value) return
-  isLoading.value = true
-
-  const lat = alertStore.perfil._lastLat
-  const lng = alertStore.perfil._lastLng
-  const ubicacionTexto = alertStore.ubicacionNombre || alertStore.ubicacion || (lat && lng ? `${lat}, ${lng}` : '')
-
-  alertStore.setEmergencia({ id: 0, titulo: 'Panico', preguntas: [] })
-
-  const nuevoCaso = casosStore.crearCaso({
-    victimRut: alertStore.perfil.rut,
-    victimNombre: alertStore.perfil.nombre,
-    victimTelefono: alertStore.perfil.telefono,
-    victimContactoNombre: alertStore.perfil.contacto_nombre || '',
-    victimContactoTelefono: alertStore.perfil.contacto_telefono || '',
-    emergencia: { id: 0, titulo: 'Panico' },
-    contexto: {
-      ubicacion: ubicacionTexto,
-      respuestas: {},
-      preguntas: {},
-    },
-    lat: lat || null,
-    lng: lng || null,
-  })
-
-  if (nuevoCaso.id && lat) {
-    gpsSocket = connectGPSSocket(nuevoCaso.id, {
-      onConnect: () => {
-        sendGPSUpdate(lat, lng)
-      },
-    })
-  }
-
-  isLoading.value = false
-  router.push({ name: 'exito', query: { casoId: nuevoCaso.id } })
 }
 
 function irAHistorial() {
@@ -134,7 +25,7 @@ function irAHistorial() {
 </script>
 
 <template>
-  <div class="mobile-phone-frame page home">
+  <div class="mobile-phone-frame page triage">
     <div class="home-bg-shape"></div>
 
     <header class="home-header">
@@ -168,61 +59,41 @@ function irAHistorial() {
           </svg>
         </button>
 
-        <router-link to="/victim/perfil" class="sidebar-item" @click="menuAbierto = false">
+        <div class="sidebar-item" @click="router.push('/victim/perfil'); menuAbierto = false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
           <span>PERFIL</span>
-        </router-link>
+        </div>
 
-        <router-link to="/victim/historial" class="sidebar-item" @click="menuAbierto = false">
+        <div class="sidebar-item" @click="irAHistorial(); menuAbierto = false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
           </svg>
           <span>HISTORIAL</span>
-        </router-link>
+        </div>
 
-        <button class="sidebar-item danger" @click="mostrarCalculadora = true; menuAbierto = false">
+        <div class="sidebar-item danger" @click="mostrarCalculadora = true; menuAbierto = false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <span>OCULTAR</span>
-        </button>
+        </div>
       </nav>
     </div>
 
-    <main class="home-main">
-      <div class="panic-zone">
-        <p class="panic-label">MANTEN PRESIONADO</p>
-
-        <button
-          class="panic-btn"
-          :class="{ pressing: presionando, loading: isLoading }"
-          @touchstart="iniciarPresionCortina"
-          @touchend="cancelarPresionCortina"
-          @touchcancel="cancelarPresionCortina"
-          @mousedown="iniciarPresionCortina"
-          @mouseup="cancelarPresionCortina"
-          @mouseleave="cancelarPresionCortina"
-          :disabled="isLoading"
-        >
-          <span class="panic-icon">{{ isLoading ? '...' : '!' }}</span>
-          <div
-            class="panic-ring"
-            :class="{ active: presionando }"
-            :style="{ transform: `scale(${1 + (escalaCortina / 2500) * 0.8})` }"
-          ></div>
-          <div
-            class="panic-progress"
-            :class="{ active: presionando }"
-            :style="{ background: `conic-gradient(#fff ${(tiempoPresion / 4) * 100}%, transparent 0)` }"
-          ></div>
-        </button>
-
-        <p class="panic-hint">4 segundos</p>
+    <main class="triage-main">
+      <div class="triage-label">EXPLICAR</div>
+      <div class="triage-grid">
+        <TriageCard
+          v-for="em in emergencias"
+          :key="em.id"
+          v-bind="em"
+          @select="seleccionarEmergencia"
+        />
       </div>
     </main>
 
@@ -264,7 +135,7 @@ function irAHistorial() {
   flex-direction: column;
 }
 
-.home-bg-circle {
+.home-bg-shape {
   position: absolute;
   top: -150px;
   right: -100px;
@@ -272,28 +143,6 @@ function irAHistorial() {
   height: 350px;
   background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
   border-radius: 50%;
-  pointer-events: none;
-}
-
-.home-bg-circle-2 {
-  position: absolute;
-  bottom: -100px;
-  left: -80px;
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(0,0,0,0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.home-bg-dots {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 30px 30px;
   pointer-events: none;
 }
 
@@ -312,6 +161,34 @@ function irAHistorial() {
   gap: 12px;
 }
 
+.escudo {
+  height: 44px;
+  width: auto;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-tag {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.brand-title {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
 .menu-btn {
   width: 42px;
   height: 42px;
@@ -324,7 +201,6 @@ function irAHistorial() {
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: all 0.2s;
   backdrop-filter: blur(8px);
 }
 
@@ -431,145 +307,32 @@ function irAHistorial() {
   color: #fca5a5;
 }
 
-.escudo {
-  height: 44px;
-  width: auto;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand-tag {
-  font-size: 9px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-}
-
-.brand-title {
-  margin: 2px 0 0;
-  font-size: 22px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
-}
-
-.home-main {
+.triage-main {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 2;
-}
-
-.panic-zone {
-  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  padding: 16px 20px;
+  position: relative;
+  z-index: 2;
+  overflow-y: auto;
 }
 
-.panic-label {
+.triage-label {
   font-size: 11px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 3px;
   text-transform: uppercase;
-  margin: 0;
+  margin-bottom: 16px;
 }
 
-.panic-hint {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.35);
-  margin: 0;
-}
-
-.panic-btn {
-  width: 170px;
-  height: 170px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #ef4444, #b91c1c 60%, #991b1b);
-  border: 8px solid rgba(255, 255, 255, 0.9);
-  box-shadow:
-    0 0 0 2px rgba(239, 68, 68, 0.3),
-    0 8px 40px rgba(0, 0, 0, 0.4),
-    inset 0 -4px 12px rgba(0, 0, 0, 0.2),
-    inset 0 4px 12px rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              box-shadow 0.3s ease;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.panic-btn.pressing {
-  transform: scale(1.08);
-  box-shadow:
-    0 0 0 20px rgba(239, 68, 68, 0.25),
-    0 0 60px rgba(239, 68, 68, 0.4),
-    0 8px 40px rgba(0, 0, 0, 0.4),
-    inset 0 -4px 12px rgba(0, 0, 0, 0.2),
-    inset 0 4px 12px rgba(255, 255, 255, 0.1);
-}
-
-.panic-btn.loading {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.panic-icon {
-  color: #fff;
-  font-size: 76px;
-  font-weight: 900;
-  z-index: 3;
-  position: relative;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  line-height: 1;
-}
-
-.panic-ring {
-  position: absolute;
-  top: -16px;
-  left: -16px;
-  right: -16px;
-  bottom: -16px;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  pointer-events: none;
-  opacity: 0;
-  transition: transform 0.16s linear, opacity 0.2s ease;
-}
-
-.panic-ring.active {
-  opacity: 1;
-}
-
-.panic-progress {
-  position: absolute;
-  top: -6px;
-  left: -6px;
-  right: -6px;
-  bottom: -6px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.panic-progress.active {
-  opacity: 0.35;
+.triage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .home-footer {

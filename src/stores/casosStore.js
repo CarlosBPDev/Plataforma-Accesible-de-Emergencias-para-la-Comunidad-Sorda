@@ -1,9 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-function generarId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
-}
+import { api } from '../services/api.js'
 
 const CARABINEROS_MOCK = [
   { nombre: 'Sargento Muñoz', unidad: '48° Comisaría' },
@@ -25,37 +22,26 @@ function calcularComisaria(ubicacion) {
   return '48° Comisaría (cercanía estimada)'
 }
 
-function cargarCasos() {
+function cargarCasosLocal() {
   try {
     const raw = localStorage.getItem('casos')
     if (!raw) return []
-    const lista = JSON.parse(raw)
-    return lista.map(c => {
-      if (c.asignadoA && !c.asignados) c.asignados = [c.asignadoA]
-      if (!c.asignados) c.asignados = []
-      if (!c.serviciosExternos) c.serviciosExternos = []
-      if (!c.comisariaCercana) c.comisariaCercana = ''
-      if (!c.victimContactoNombre) c.victimContactoNombre = ''
-      if (!c.victimContactoTelefono) c.victimContactoTelefono = ''
-      if (!c.contactoEstado) c.contactoEstado = null
-      if (!c.contactoNotas) c.contactoNotas = ''
-      delete c.asignadoA
-      return c
-    })
+    return JSON.parse(raw).map(normalizeCase)
   } catch {
     return []
   }
 }
 
-function guardarCasos(lista) {
+function guardarCasosLocal(lista) {
   localStorage.setItem('casos', JSON.stringify(lista))
 }
 
 export const useCasosStore = defineStore('casos', () => {
-  const casos = ref(cargarCasos())
+  const casos = ref(cargarCasosLocal())
+  const useAPI = ref(navigator.onLine)
 
   function sync() {
-    guardarCasos(casos.value)
+    guardarCasosLocal(casos.value)
   }
 
   const carabineros = ref(CARABINEROS_MOCK)
@@ -72,22 +58,68 @@ export const useCasosStore = defineStore('casos', () => {
   const casosCompletados = computed(() =>
     casos.value.filter(c => c.estado === 'completada')
   )
+  const casosDisponibles = computed(() =>
+    casos.value.filter(c => c.estado === 'recibida' || c.estado === 'aceptada')
+  )
 
-  function crearCaso(datos) {
-    const nuevo = {
-      id: generarId(),
+  async function cargarCasos() {
+    if (!useAPI.value) return
+    try {
+      const data = await api.casos.listar()
+      const lista = data.results || data || []
+      casos.value = lista.map(normalizeCase)
+      sync()
+    } catch (e) {
+      console.warn('API no disponible, usando localStorage:', e.message)
+    }
+  }
+
+  function normalizeCase(c) {
+    return {
+      ...c,
+      victimRut: c.victim_rut || c.victimRut || '',
+      victimNombre: c.victim_nombre || c.victimNombre || '',
+      victimTelefono: c.victim_telefono || c.victimTelefono || '',
+      victimContactoNombre: c.victim_contacto_nombre || c.victimContactoNombre || '',
+      victimContactoTelefono: c.victim_contacto_telefono || c.victimContactoTelefono || '',
+      estado: c.estado || 'recibida',
+      creadoEn: c.creado_en || c.creadoEn || new Date().toISOString(),
+      actualizadoEn: c.actualizado_en || c.actualizadoEn || new Date().toISOString(),
+    }
+  }
+
+  async function crearCaso(datos) {
+    const payload = {
       victimRut: datos.victimRut || '',
       victimNombre: datos.victimNombre || '',
       victimTelefono: datos.victimTelefono || '',
-      victimContacto: datos.victimContacto || '',
       victimContactoNombre: datos.victimContactoNombre || '',
       victimContactoTelefono: datos.victimContactoTelefono || '',
-      contactoEstado: null,
-      contactoNotas: '',
       emergencia: datos.emergencia || null,
       contexto: datos.contexto || { ubicacion: '', respuestas: {}, preguntas: {} },
-      estado: 'recibida',
-      asignados: [],
+      lat: datos.lat || null,
+      lng: datos.lng || null,
+    }
+
+    if (useAPI.value) {
+      try {
+        const nuevo = normalizeCase(await api.casos.crear(payload))
+        casos.value.unshift(nuevo)
+        sync()
+        return nuevo
+      } catch (e) {
+        console.warn('API error, creando localmente:', e.message)
+      }
+    }
+
+    const nuevo = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      ...payload,
+      victimContacto: datos.victimContacto || '',
+      contactoEstado: null,
+      contactoNotas: '',
+      estado: 'asignada',
+      asignados: ['Sargento Munoz', 'Cabo Perez'],
       comisariaCercana: calcularComisaria(datos.contexto?.ubicacion || ''),
       serviciosExternos: [
         { servicio: 'Ambulancia 131', contactado: false },
@@ -96,6 +128,9 @@ export const useCasosStore = defineStore('casos', () => {
       notaOperador: '',
       preguntasTerrenoPendientes: [],
       respuestasTerreno: {},
+      ubicacionCarabinero: {},
+      tiempoEstimadoLlegada: null,
+      gpsLastUpdated: null,
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString(),
       acta: null,
@@ -105,26 +140,32 @@ export const useCasosStore = defineStore('casos', () => {
     return nuevo
   }
 
-  function aceptarCaso(casoId) {
+  async function aceptarCaso(casoId) {
     const c = casos.value.find(x => x.id === casoId)
     if (c && c.estado === 'recibida') {
       c.estado = 'aceptada'
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.cambiarEstado(casoId, 'aceptada') } catch {}
+      }
     }
   }
 
-  function asignarCarabinero(casoId, nombre) {
+  async function asignarCarabinero(casoId, nombre) {
     const c = casos.value.find(x => x.id === casoId)
-    if (c && (c.estado === 'recibida' || c.estado === 'aceptada' || c.estado === 'asignada') && !c.asignados.includes(nombre)) {
+    if (c && !c.asignados.includes(nombre)) {
       c.asignados.push(nombre)
       if (c.estado !== 'asignada') c.estado = 'asignada'
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { asignados: c.asignados, estado: c.estado }) } catch {}
+      }
     }
   }
 
-  function quitarCarabinero(casoId, nombre) {
+  async function quitarCarabinero(casoId, nombre) {
     const c = casos.value.find(x => x.id === casoId)
     if (c) {
       c.asignados = c.asignados.filter(n => n !== nombre)
@@ -133,88 +174,129 @@ export const useCasosStore = defineStore('casos', () => {
       }
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { asignados: c.asignados, estado: c.estado }) } catch {}
+      }
     }
   }
 
-  function iniciarEncuentro(casoId) {
+  async function iniciarEncuentro(casoId) {
     const c = casos.value.find(x => x.id === casoId)
     if (c && c.estado === 'asignada') {
       c.estado = 'en_terreno'
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.cambiarEstado(casoId, 'en_terreno') } catch {}
+      }
     }
   }
 
-  function marcarEnTerreno(casoId) {
+  async function marcarEnTerreno(casoId) {
     const c = casos.value.find(x => x.id === casoId)
     if (c && (c.estado === 'asignada' || c.estado === 'aceptada')) {
       c.estado = 'en_terreno'
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.cambiarEstado(casoId, 'en_terreno') } catch {}
+      }
     }
   }
 
-  function toggleServicioContactado(casoId, index) {
+  async function toggleServicioContactado(casoId, index) {
     const c = casos.value.find(x => x.id === casoId)
     if (c && c.serviciosExternos && c.serviciosExternos[index]) {
       c.serviciosExternos[index].contactado = !c.serviciosExternos[index].contactado
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { serviciosExternos: c.serviciosExternos }) } catch {}
+      }
     }
   }
 
-  function setContactoEstado(casoId, estado) {
+  async function setContactoEstado(casoId, estado) {
     const c = casos.value.find(x => x.id === casoId)
     if (c) {
       c.contactoEstado = estado
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { contactoEstado: estado }) } catch {}
+      }
     }
   }
 
-  function setContactoNotas(casoId, notas) {
+  async function setContactoNotas(casoId, notas) {
     const c = casos.value.find(x => x.id === casoId)
     if (c) {
       c.contactoNotas = notas
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { contactoNotas: notas }) } catch {}
+      }
     }
   }
 
-  function setNotaOperador(casoId, nota) {
+  async function setNotaOperador(casoId, nota) {
     const c = casos.value.find(x => x.id === casoId)
     if (c) {
       c.notaOperador = nota
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { notaOperador: nota }) } catch {}
+      }
     }
   }
 
-  function enviarPreguntasTerreno(casoId, arrayIds) {
+  async function enviarPreguntasTerreno(casoId, arrayIds) {
     const c = casos.value.find(x => x.id === casoId)
     if (!c) return
     c.preguntasTerrenoPendientes = [...new Set([...c.preguntasTerrenoPendientes, ...arrayIds])]
     if (c.estado === 'asignada') c.estado = 'en_terreno'
     c.actualizadoEn = new Date().toISOString()
     sync()
+    if (useAPI.value) {
+      try { await api.casos.enviarPreguntas(casoId, arrayIds) } catch {}
+    }
   }
 
-  function responderPreguntasTerreno(casoId, respuestasObj) {
+  async function responderPreguntasTerreno(casoId, respuestasObj) {
     const c = casos.value.find(x => x.id === casoId)
     if (!c) return
     c.respuestasTerreno = { ...c.respuestasTerreno, ...respuestasObj }
     c.preguntasTerrenoPendientes = []
     c.actualizadoEn = new Date().toISOString()
     sync()
+    if (useAPI.value) {
+      try { await api.casos.responderPreguntas(casoId, respuestasObj) } catch {}
+    }
   }
 
-  function completarCaso(casoId, acta) {
+  async function completarCaso(casoId, acta) {
     const c = casos.value.find(x => x.id === casoId)
     if (c) {
       c.estado = 'completada'
       c.acta = acta
       c.actualizadoEn = new Date().toISOString()
       sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizar(casoId, { estado: 'completada', acta }) } catch {}
+      }
+    }
+  }
+
+  async function actualizarGPS(casoId, lat, lng) {
+    const c = casos.value.find(x => x.id === casoId)
+    if (c) {
+      c.ubicacionCarabinero = { lat, lng, actualizadoEn: new Date().toISOString() }
+      sync()
+      if (useAPI.value) {
+        try { await api.casos.actualizarGPS(casoId, lat, lng) } catch {}
+      }
     }
   }
 
@@ -226,9 +308,25 @@ export const useCasosStore = defineStore('casos', () => {
     return casos.value.filter(c => c.victimRut === rut)
   }
 
-  const casosDisponibles = computed(() =>
-    casos.value.filter(c => c.estado === 'recibida' || c.estado === 'aceptada')
-  )
+  async function actualizarCaso(casoId, datos) {
+    const c = casos.value.find(x => x.id === casoId)
+    if (!c) return
+    Object.assign(c, datos)
+    c.actualizadoEn = new Date().toISOString()
+    sync()
+    if (useAPI.value) {
+      try { await api.casos.actualizar(casoId, datos) } catch {}
+    }
+  }
+
+  async function enviarCasoAPI(casoId) {
+    if (!useAPI.value) return
+    const c = casos.value.find(x => x.id === casoId)
+    if (!c) return
+    try {
+      await api.casos.actualizar(casoId, { estado: c.estado, contexto: c.contexto })
+    } catch {}
+  }
 
   return {
     casos,
@@ -238,7 +336,9 @@ export const useCasosStore = defineStore('casos', () => {
     casosAsignados,
     casosCompletados,
     casosDisponibles,
+    cargarCasos,
     crearCaso,
+    actualizarCaso,
     aceptarCaso,
     asignarCarabinero,
     quitarCarabinero,
@@ -251,9 +351,11 @@ export const useCasosStore = defineStore('casos', () => {
     enviarPreguntasTerreno,
     responderPreguntasTerreno,
     completarCaso,
+    actualizarGPS,
     getCasoPorId,
     getCasosPorRut,
     calcularComisaria,
     sync,
+    enviarCasoAPI,
   }
 })

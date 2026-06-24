@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -8,16 +8,60 @@ const route = useRoute()
 const interprete = route.query.nombre || 'Intérprete'
 const silenciado = ref(false)
 
+function toggleSilenciar() {
+  silenciado.value = !silenciado.value
+  if (stream) {
+    stream.getAudioTracks().forEach(t => { t.enabled = !silenciado.value })
+  }
+}
+const camaraActiva = ref(false)
+const errorCamara = ref('')
+const videoLocal = ref(null)
+let stream = null
+
+onMounted(async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } },
+      audio: true
+    })
+    if (videoLocal.value) {
+      videoLocal.value.srcObject = stream
+    }
+    camaraActiva.value = true
+  } catch (err) {
+    console.error('Error al acceder a la cámara:', err)
+    errorCamara.value = err.name === 'NotAllowedError'
+      ? 'Permiso de cámara denegado'
+      : 'No se pudo activar la cámara'
+  }
+})
+
+function detenerCamara() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop())
+    stream = null
+  }
+  camaraActiva.value = false
+}
+
 function colgar() {
+  detenerCamara()
   router.push({ name: 'policia' })
 }
+
+onUnmounted(() => {
+  detenerCamara()
+})
 </script>
 
 <template>
   <div class="page policia videollamada-container">
     <div class="video-main">
-      <div class="video-local">
-        <span class="video-label">Tú (Carabinero)</span>
+      <div class="video-local" :class="{ activa: camaraActiva }">
+        <video v-if="camaraActiva" ref="videoLocal" autoplay playsinline muted></video>
+        <span v-else class="video-label">{{ errorCamara || 'Tú (Carabinero)' }}</span>
+        <span v-if="camaraActiva" class="video-label">Tú</span>
       </div>
       <div class="video-remote">
         <div class="remote-avatar">{{ interprete.charAt(0) }}</div>
@@ -27,7 +71,7 @@ function colgar() {
     </div>
 
     <div class="video-controls">
-      <button class="btn-mute" :class="{ muted: silenciado }" @click="silenciado = !silenciado">
+      <button class="btn-mute" :class="{ muted: silenciado }" @click="toggleSilenciar">
         <svg v-if="!silenciado" viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 9v6h4l5 5V4L7 9H3z"/>
           <path d="M16 7.5c.68.88 1.07 1.99 1.07 3.25s-.39 2.37-1.07 3.25"/>
@@ -116,12 +160,31 @@ function colgar() {
   justify-content: center;
   padding: 6px;
   border: 2px solid #006F3E;
+  overflow: hidden;
+}
+
+.video-local.activa {
+  border-color: #22c55e;
+  padding: 0;
+}
+
+.video-local video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  border-radius: 10px;
 }
 
 .video-label {
   font-size: 9px;
   font-weight: 700;
   color: #fff;
+  position: absolute;
+  bottom: 4px;
+  background: rgba(0,0,0,0.5);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .video-controls {

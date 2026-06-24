@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -8,108 +8,227 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const display = ref('')
+const esOperador = ref(false)
 
 watch(() => props.modelValue, val => {
-  if (!val) display.value = ''
+  if (!val) {
+    display.value = ''
+    esOperador.value = false
+  }
 })
 
 function close() {
   emit('update:modelValue', false)
   display.value = ''
+  esOperador.value = false
+}
+
+function limpiar() {
+  display.value = ''
+  esOperador.value = false
+}
+
+function borrar() {
+  display.value = display.value.slice(0, -1)
+  esOperador.value = false
+}
+
+function toggleSigno() {
+  if (!display.value) return
+  if (display.value.startsWith('-')) {
+    display.value = display.value.slice(1)
+  } else {
+    display.value = '-' + display.value
+  }
+}
+
+function porcentaje() {
+  if (!display.value) return
+  const num = parseFloat(display.value)
+  if (!isNaN(num)) {
+    display.value = String(num / 100)
+  }
 }
 
 function press(key) {
-  if (key === 'C') {
-    display.value = ''
+  if (key === 'AC') {
+    limpiar()
     return
   }
   if (key === '⌫') {
-    display.value = display.value.slice(0, -1)
+    borrar()
+    return
+  }
+  if (key === '+/-') {
+    toggleSigno()
+    return
+  }
+  if (key === '%') {
+    porcentaje()
     return
   }
   if (key === '=') {
-    const raw = display.value.replace(/×/g, '*').replace(/÷/g, '/')
+    const raw = display.value.replace(/×/g, '*').replace(/÷/g, '/').replace(/,/g, '')
     if (!/^[0-9+\-*/. ]+$/.test(raw)) return
     try {
       const result = Function(`"use strict"; return (${raw})`)()
-      display.value = String(result)
+      display.value = formatearNumero(String(result))
     } catch {}
+    esOperador.value = false
     return
   }
 
-  display.value = (display.value + key).slice(-20)
-  if (display.value === '505') {
-    close()
+  if (['+', '-', '×', '÷'].includes(key)) {
+    if (esOperador.value) {
+      display.value = display.value.slice(0, -1) + key
+    } else {
+      display.value = (display.value + key).slice(-20)
+    }
+    esOperador.value = true
+    return
+  }
+
+  esOperador.value = false
+  display.value = (display.value + key).slice(-15)
+
+  if (display.value === '133') {
+    setTimeout(() => close(), 200)
   }
 }
+
+function formatearNumero(num) {
+  if (num === 'Infinity' || num === '-Infinity' || num === 'NaN') return 'Error'
+  const parts = num.split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+onUnmounted(() => {
+  display.value = ''
+  sessionStorage.clear()
+})
 </script>
 
 <template>
-  <div v-if="modelValue" class="safe-calculator-overlay-container">
-    <div class="calculator-display">{{ display || '0' }}</div>
-    <div class="calculator-buttons-grid">
-      <button v-for="n in ['7','8','9','÷','4','5','6','×','1','2','3','-','0','.','+','⌫']" :key="n" class="calc-btn" :class="{ operator: ['÷','×','-','+'].includes(n) }" @click="press(n)">{{ n }}</button>
-      <button class="calc-btn" @click="press('C')">C</button>
-      <button class="calc-btn operator" @click="press('=')">=</button>
+  <div v-if="modelValue" class="calc-overlay">
+    <div class="calc-body">
+      <div class="calc-display">{{ formatearNumero(display) || '0' }}</div>
+
+      <div class="calc-keypad">
+        <button class="key key-func" @click="press('AC')">AC</button>
+        <button class="key key-func" @click="press('+/-')">+/−</button>
+        <button class="key key-func" @click="press('%')">%</button>
+        <button class="key key-op" @click="press('÷')">÷</button>
+
+        <button class="key key-num" @click="press('7')">7</button>
+        <button class="key key-num" @click="press('8')">8</button>
+        <button class="key key-num" @click="press('9')">9</button>
+        <button class="key key-op" @click="press('×')">×</button>
+
+        <button class="key key-num" @click="press('4')">4</button>
+        <button class="key key-num" @click="press('5')">5</button>
+        <button class="key key-num" @click="press('6')">6</button>
+        <button class="key key-op" @click="press('-')">−</button>
+
+        <button class="key key-num" @click="press('1')">1</button>
+        <button class="key key-num" @click="press('2')">2</button>
+        <button class="key key-num" @click="press('3')">3</button>
+        <button class="key key-op" @click="press('+')">+</button>
+
+        <button class="key key-num key-0" @click="press('0')">0</button>
+        <button class="key key-num" @click="press('.')">.</button>
+        <button class="key key-op" @click="press('=')">=</button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.safe-calculator-overlay-container {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  background-color: #ffffff !important;
-  z-index: 2000 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 32px 24px !important;
-  box-sizing: border-box !important;
-  border-radius: 36px !important;
-  overflow: hidden !important;
+.calc-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 36px;
+  overflow: hidden;
 }
 
-.calculator-display {
+.calc-body {
   width: 100%;
-  background: #1e293b;
-  color: #ffffff;
-  text-align: right;
-  padding: 18px;
-  font-size: 28px;
-  font-weight: 700;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
-.calculator-buttons-grid {
+.calc-display {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 20px 16px;
+  font-size: 64px;
+  font-weight: 300;
+  color: #fff;
+  min-height: 80px;
+  word-break: break-all;
+  line-height: 1.1;
+}
+
+.calc-keypad {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  flex: 1;
+  padding-bottom: 8px;
 }
 
-.calc-btn {
-  background: #f1f5f9;
+.key {
+  aspect-ratio: 1;
   border: none;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.1s;
+  transition: filter 0.1s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.calc-btn:active {
-  background: #cbd5e1;
+.key:active {
+  filter: brightness(1.4);
 }
 
-.calc-btn.operator {
-  background: #e2e8f0;
-  color: #006F3E;
+.key-num {
+  background: #333;
+  color: #fff;
+}
+
+.key-func {
+  background: #a5a5a5;
+  color: #000;
+  font-size: 18px;
+}
+
+.key-op {
+  background: #ff9f0a;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.key-0 {
+  grid-column: span 2;
+  border-radius: 999px;
+  aspect-ratio: auto;
+  height: 100%;
+  justify-content: flex-start;
+  padding-left: 26px;
 }
 </style>

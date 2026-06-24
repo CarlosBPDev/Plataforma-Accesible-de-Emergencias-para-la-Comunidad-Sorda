@@ -1,7 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 
 :root {
-  /* Preservación estricta de la Paleta Institucional */
   --primary: #006F3E;
   --primary-light: #008F50;
   --primary-dark: #004D2B;
@@ -15,64 +14,84 @@
   --warning: #F59E0B;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --radius: 12px;
-  
-  /* Tipografía Oficial */
   --font-main: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* RESET GENERAL CON CENTRADO */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100vh;
-  background-color: #0f172a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-family: var(--font-main);
 }
 
 .page {
   font-family: var(--font-main);
   box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* UNIFICACIÓN RIGURUSA DEL APARTADO ESTÉTICO MÓVIL SPRINT 1 */
-.mobile-phone-frame,
-.page.contexto, 
-.page.exito, 
-.page.historial, 
-.page.perfil,
-.page.policia {
-  width: 450px !important;
-  min-width: 450px !important;
-  max-width: 450px !important;
-  height: 850px !important;
-  min-height: 850px !important;
-  max-height: 850px !important;
-  position: relative !important;
-  overflow: hidden !important;
-  background-color: var(--surface-2) !important;
-  border: 2px solid #1e293b !important;
-  border-radius: 44px !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  flex-direction: column !important;
-  margin: auto !important;
-  box-shadow:
-    0 0 0 3px #475569,
-    0 24px 80px rgba(0,0,0,0.35),
-    0 8px 20px rgba(0,0,0,0.12)
-  !important;
-}
-
-.page *, .mobile-phone-frame * {
+.page * {
   box-sizing: border-box;
 }
 
-/* Contención estricta para la calculadora */
+/* =============================================
+   DESKTOP
+   ============================================= */
+@media (min-width: 481px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .mobile-phone-frame,
+  .page.contexto,
+  .page.exito,
+  .page.historial,
+  .page.perfil,
+  .page.policia,
+  .page.login-page,
+  .page.perfil-view {
+    width: 390px !important;
+    max-width: 390px !important;
+    height: 844px !important;
+    max-height: 90vh !important;
+    border-radius: 40px !important;
+    border: 8px solid #1e293b !important;
+    overflow-y: auto !important;
+    box-shadow:
+      0 0 0 2px #475569,
+      0 25px 60px rgba(0, 0, 0, 0.5),
+      0 0 120px rgba(0, 111, 62, 0.08) !important;
+  }
+}
+
+/* =============================================
+   MOBILE
+   ============================================= */
+@media (max-width: 480px) {
+  body {
+    display: block;
+    background: var(--surface-2);
+  }
+
+  .mobile-phone-frame,
+  .page.contexto,
+  .page.exito,
+  .page.historial,
+  .page.perfil,
+  .page.policia,
+  .page.login-page,
+  .page.perfil-view {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Calculadora */
 .safe-calculator-overlay-container {
   position: absolute !important;
   inset: 0 !important;
@@ -83,38 +102,10 @@ html, body {
   overflow: hidden !important;
 }
 
-/* Preservación de transiciones */
+/* Transiciones */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.2s ease;
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
-}
-
-/* =============================================
-   RESPONSIVE: pantallas menores al chasis móvil
-   ============================================= */
-@media (max-width: 460px), (max-height: 860px) {
-  html, body {
-    align-items: flex-start;
-    justify-content: flex-start;
-    background-color: var(--surface-2);
-  }
-
-  .mobile-phone-frame,
-  .page.contexto,
-  .page.exito,
-  .page.historial,
-  .page.perfil,
-  .page.policia {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    height: 100dvh !important;
-    min-height: 100dvh !important;
-    max-height: 100dvh !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
 }

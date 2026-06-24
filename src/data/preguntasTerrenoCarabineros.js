@@ -1,118 +1,115 @@
 export const preguntasTerrenoCarabineros = [
-  // ===== UNIVERSALES =====
   {
     id: 1,
     categoria: 'todas',
-    pregunta_texto: '¿Eres tú quien pidió ayuda por la aplicación?',
+    pregunta_texto: '¿Eres tú quien pidió ayuda?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 2,
     categoria: 'todas',
-    pregunta_texto: '¿Entiendes lo que dice esta pantalla?',
+    pregunta_texto: '¿Entiendes esta pantalla?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 3,
     categoria: 'todas',
-    pregunta_texto: '¿Estás herido/a o sangrando?',
+    pregunta_texto: '¿Estás herido/a?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 4,
     categoria: 'todas',
-    pregunta_texto: '¿Necesitas que llamemos a una ambulancia urgente?',
+    pregunta_texto: '¿Necesitas ambulancia urgente?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 5,
     categoria: 'todas',
-    pregunta_texto: '¿Estás completamente solo/a aquí?',
+    pregunta_texto: '¿Estás solo/a aquí?',
     opciones: ['Sí, solo/a', 'No, hay alguien más'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 6,
     categoria: 'todas',
-    pregunta_texto: '¿Hay cámaras de seguridad en este lugar?',
+    pregunta_texto: '¿Hay cámaras aquí?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/emergencia.gif'
   },
   {
     id: 7,
     categoria: 'todas',
-    pregunta_texto: '¿Quieres hacer la denuncia oficial ahora mismo?',
+    pregunta_texto: '¿Quieres hacer la denuncia ahora?',
     opciones: ['Sí', 'No', 'Después'],
     gif_lsch: '/lsch/ayuda.gif'
   },
 
-  // ===== VIOLENCIA =====
   {
     id: 8,
     categoria: 'Violencia',
-    pregunta_texto: '¿El agresor está dentro de esta casa AHORA MISMO?',
+    pregunta_texto: '¿El agresor está aquí AHORA?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 9,
     categoria: 'Violencia',
-    pregunta_texto: '¿El agresor tiene un arma (cuchillo, pistola o similar)?',
+    pregunta_texto: '¿El agresor tiene arma?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 10,
     categoria: 'Violencia',
-    pregunta_texto: '¿Te golpeó o te amenazó de muerte hoy?',
+    pregunta_texto: '¿Te golpeó o amenazó hoy?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 11,
     categoria: 'Violencia',
-    pregunta_texto: '¿Hay niños pequeños o ancianos en peligro aquí?',
+    pregunta_texto: '¿Hay niños o ancianos en peligro?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 12,
     categoria: 'Violencia',
-    pregunta_texto: '¿Tienes una orden de alejamiento vigente contra esta persona?',
+    pregunta_texto: '¿Tienes orden de alejamiento?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/emergencia.gif'
   },
 
-  // ===== ROBO =====
   {
     id: 13,
     categoria: 'Robo',
-    pregunta_texto: '¿Los delincuentes siguen aquí adentro?',
+    pregunta_texto: '¿Ladrones aquí?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/emergencia.gif'
   },
   {
     id: 14,
     categoria: 'Robo',
-    pregunta_texto: '¿Te mostraron armas de fuego o cuchillos?',
+    pregunta_texto: '¿Te mostraron armas?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 15,
     categoria: 'Robo',
-    pregunta_texto: '¿Se llevaron tus documentos de identidad?',
+    pregunta_texto: '¿Se llevaron tus documentos?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/emergencia.gif'
   },
   {
     id: 16,
     categoria: 'Robo',
-    pregunta_texto: '¿Los ladrones escaparon en un vehículo (auto/moto)?',
+    pregunta_texto: '¿Escaparon en auto?',
     opciones: ['Sí', 'No', 'No vi'],
     gif_lsch: '/lsch/emergencia.gif'
   },
@@ -124,25 +121,24 @@ export const preguntasTerrenoCarabineros = [
     gif_lsch: '/lsch/peligro.gif'
   },
 
-  // ===== ACCIDENTE =====
   {
     id: 18,
     categoria: 'Accidente',
-    pregunta_texto: '¿Hay personas atrapadas dentro de los vehículos?',
+    pregunta_texto: '¿Personas atrapadas en vehículos?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 19,
     categoria: 'Accidente',
-    pregunta_texto: '¿Hay alguna persona inconsciente o que no respira?',
+    pregunta_texto: '¿Alguien inconsciente o no respira?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 20,
     categoria: 'Accidente',
-    pregunta_texto: '¿El otro conductor se arrancó del lugar?',
+    pregunta_texto: '¿El otro conductor se fue?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/emergencia.gif'
   },
@@ -154,25 +150,24 @@ export const preguntasTerrenoCarabineros = [
     gif_lsch: '/lsch/ayuda.gif'
   },
 
-  // ===== OTRA (Sospechosos / Otras) =====
   {
     id: 22,
     categoria: 'Otra',
-    pregunta_texto: '¿La persona sospechosa sigue cerca de aquí?',
+    pregunta_texto: '¿Sospechoso sigue cerca?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 23,
     categoria: 'Otra',
-    pregunta_texto: '¿El sospechoso intentó forzar la puerta o ventana?',
+    pregunta_texto: '¿Intentó forzar puerta o ventana?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/peligro.gif'
   },
   {
     id: 24,
     categoria: 'Otra',
-    pregunta_texto: '¿Tu vida corre peligro en este exacto momento?',
+    pregunta_texto: '¿Tu vida en peligro ahora?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/peligro.gif'
   },

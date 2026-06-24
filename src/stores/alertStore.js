@@ -1,5 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
+import { api } from '../services/api.js'
+
+async function reverseGeocode(lat, lng) {
+  if (!lat || !lng) return ''
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`,
+      { headers: { 'User-Agent': 'EmergenciaApp/1.0' } }
+    )
+    const data = await res.json()
+    if (data.display_name) {
+      const parts = data.display_name.split(', ')
+      if (parts.length >= 2) {
+        return `${parts[0]}, ${parts[1]}`
+      }
+      return parts[0] || data.display_name
+    }
+  } catch {}
+  return ''
+}
 
 export const useAlertStore = defineStore('alert', () => {
   const emergenciaSeleccionada = ref(null)
@@ -14,24 +34,49 @@ export const useAlertStore = defineStore('alert', () => {
     contacto_telefono: '',
   })
 
-  function cargarPerfil() {
+  async function cargarPerfil() {
     try {
       const raw = localStorage.getItem('perfil')
       if (raw) {
         const data = JSON.parse(raw)
-        perfil.rut = data.rut || ''
-        perfil.nombre = data.nombre || ''
-        perfil.telefono = data.telefono || ''
-        perfil.direccion = data.direccion || ''
-        perfil.contacto_nombre = data.contacto_nombre || ''
-        perfil.contacto_telefono = data.contacto_telefono || ''
+        Object.assign(perfil, data)
       }
     } catch {}
+
+    if (perfil.rut && navigator.onLine) {
+      try {
+        const data = await api.perfil.obtener(perfil.rut)
+        Object.assign(perfil, {
+          rut: data.rut || perfil.rut,
+          num_documento: data.num_documento || perfil.num_documento,
+          nombre: data.nombre || perfil.nombre,
+          telefono: data.telefono || perfil.telefono,
+          direccion: data.direccion || perfil.direccion,
+          contacto_nombre: data.contacto_nombre || perfil.contacto_nombre,
+          contacto_telefono: data.contacto_telefono || perfil.contacto_telefono,
+        })
+        localStorage.setItem('perfil', JSON.stringify({ ...perfil }))
+      } catch {}
+    }
   }
 
-  function actualizarPerfil(data) {
+  async function actualizarPerfil(data) {
     Object.assign(perfil, data)
     localStorage.setItem('perfil', JSON.stringify({ ...perfil }))
+
+    if (navigator.onLine && perfil.rut) {
+      try {
+        await api.perfil.actualizar(perfil.rut, {
+          rut: perfil.rut,
+          num_documento: perfil.num_documento || '',
+          nombre: perfil.nombre,
+          telefono: perfil.telefono,
+          direccion: perfil.direccion,
+          contacto_nombre: perfil.contacto_nombre,
+          contacto_telefono: perfil.contacto_telefono,
+        })
+      } catch {}
+    }
   }
 
   const wizardStep = ref(0)
@@ -39,10 +84,10 @@ export const useAlertStore = defineStore('alert', () => {
 
   const respuestas = reactive({})
   const ubicacion = ref('')
+  const ubicacionNombre = ref('')
 
-  // Estado del Encuentro en Terreno
   const encuentroActivo = ref(false)
-  const encuentroModo = ref('carabinero') // 'carabinero' | 'sordo'
+  const encuentroModo = ref('carabinero')
   const encuentroPreguntaActual = ref(0)
   const encuentroPreguntas = ref([])
   const encuentroRespuestas = reactive([])
@@ -70,11 +115,19 @@ export const useAlertStore = defineStore('alert', () => {
     respuestas[preguntaId] = opcion
   }
 
-  function setUbicacion(val) {
+  function setUbicacion(val, lat, lng) {
     ubicacion.value = val
+    if (lat !== undefined && lng !== undefined) {
+      perfil._lastLat = lat
+      perfil._lastLng = lng
+    }
+    if (lat && lng) {
+      reverseGeocode(lat, lng).then(nombre => {
+        ubicacionNombre.value = nombre
+      })
+    }
   }
 
-  // Acciones del Encuentro
   function iniciarEncuentro(preguntas) {
     encuentroActivo.value = true
     encuentroModo.value = 'carabinero'
@@ -174,6 +227,7 @@ export const useAlertStore = defineStore('alert', () => {
     encuentroTimestamp,
     encuentroActa,
     perfil,
+    ubicacionNombre,
     cargarPerfil,
     actualizarPerfil,
     setEmergencia,

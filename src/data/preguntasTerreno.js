@@ -1,5 +1,4 @@
 export const preguntasTerreno = [
-  // ---- CATEGORÍA: Violencia ----
   {
     id: 1,
     categoria: 'Violencia',
@@ -38,23 +37,22 @@ export const preguntasTerreno = [
   {
     id: 6,
     categoria: 'Violencia',
-    pregunta_texto: '¿Es la primera vez que te agrede?',
+    pregunta_texto: '¿Es la primera vez?',
     opciones: ['Sí, primera vez', 'No, ya antes', 'No sé'],
     gif_lsch: '/lsch/emergencia.gif'
   },
   {
     id: 7,
     categoria: 'Violencia',
-    pregunta_texto: '¿Necesitas una ambulancia?',
+    pregunta_texto: '¿Necesitas ambulancia?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
 
-  // ---- CATEGORÍA: Robo ----
   {
     id: 8,
     categoria: 'Robo',
-    pregunta_texto: '¿Fue en tu casa o en la calle?',
+    pregunta_texto: '¿Dónde fue? Casa o calle',
     opciones: ['En mi casa', 'En la calle'],
     saltos: { 'En mi casa': 9, 'En la calle': 11 },
     gif_lsch: '/lsch/emergencia.gif'
@@ -62,7 +60,7 @@ export const preguntasTerreno = [
   {
     id: 9,
     categoria: 'Robo',
-    pregunta_texto: '¿Los ladrones siguen ahí?',
+    pregunta_texto: '¿Ladrones aquí?',
     opciones: ['Sí', 'No, ya se fueron'],
     gif_lsch: '/lsch/emergencia.gif'
   },
@@ -77,7 +75,7 @@ export const preguntasTerreno = [
   {
     id: 11,
     categoria: 'Robo',
-    pregunta_texto: '¿Viste cómo escaparon?',
+    pregunta_texto: '¿Cómo escaparon?',
     opciones: ['A pie', 'En auto', 'En moto', 'No vi'],
     gif_lsch: '/lsch/emergencia.gif'
   },
@@ -99,23 +97,22 @@ export const preguntasTerreno = [
   {
     id: 14,
     categoria: 'Robo',
-    pregunta_texto: '¿Necesitas una ambulancia?',
+    pregunta_texto: '¿Necesitas ambulancia?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
 
-  // ---- CATEGORÍA: Accidente ----
   {
     id: 15,
     categoria: 'Accidente',
-    pregunta_texto: '¿Hay personas inconscientes?',
+    pregunta_texto: '¿Personas inconscientes?',
     opciones: ['Sí', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
   {
     id: 16,
     categoria: 'Accidente',
-    pregunta_texto: '¿Hay personas atrapadas?',
+    pregunta_texto: '¿Personas atrapadas?',
     opciones: ['Sí', 'No', 'No sé'],
     gif_lsch: '/lsch/ayuda.gif'
   },
@@ -148,7 +145,6 @@ export const preguntasTerreno = [
     gif_lsch: '/lsch/ayuda.gif'
   },
 
-  // ---- CATEGORÍA: Otra ----
   {
     id: 21,
     categoria: 'Otra',
@@ -166,7 +162,7 @@ export const preguntasTerreno = [
   {
     id: 23,
     categoria: 'Otra',
-    pregunta_texto: '¿Necesitas una ambulancia?',
+    pregunta_texto: '¿Necesitas ambulancia?',
     opciones: ['Sí, urgente', 'Sí, pero no urgente', 'No'],
     gif_lsch: '/lsch/ayuda.gif'
   },
