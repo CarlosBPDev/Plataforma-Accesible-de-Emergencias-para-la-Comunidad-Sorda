@@ -337,6 +337,12 @@ function startPoliceMovement() {
         </div>
         <div class="contexto-modal-body">
           <div v-for="pid in casoActivo.preguntasTerrenoPendientes" :key="pid" class="pregunta-item">
+            <img
+              v-if="preguntasTerrenoCarabineros.find(p => p.id === pid)?.gif_lsch"
+              :src="preguntasTerrenoCarabineros.find(p => p.id === pid).gif_lsch"
+              class="pregunta-gif"
+              :alt="preguntasTerrenoCarabineros.find(p => p.id === pid)?.pregunta_texto"
+            />
             <span class="pregunta-texto">{{ preguntasTerrenoCarabineros.find(p => p.id === pid)?.pregunta_texto || pid }}</span>
             <div class="pregunta-opciones">
               <button
@@ -724,6 +730,14 @@ function startPoliceMovement() {
   border-radius: 10px;
   align-self: center;
   margin-top: 4px;
+}
+
+.pregunta-gif {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f3f4f6;
 }
 
 .pregunta-item {
