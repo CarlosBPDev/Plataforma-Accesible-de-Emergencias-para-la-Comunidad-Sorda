@@ -1,0 +1,59 @@
+services:
+  # === Backend: Django + Daphne (ASGI) ===
+  - type: web
+    name: backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile.backend
+    plan: free
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_NAME
+        fromDatabase:
+          name: eme-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: eme-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: eme-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: eme-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: eme-db
+          property: port
+
+  # === Frontend: Vite + Vue 3 (SPA) ===
+  - type: web
+    name: frontend
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://backend.onrender.com/api
+      - key: VITE_WS_URL
+        value: wss://backend.onrender.com/ws
+
+databases:
+  - name: eme-db
+    plan: free
+    databaseName: taller_interfaces
+    user: eme_user
