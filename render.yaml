@@ -49,9 +49,9 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://backend.onrender.com/api
+        value: https://backend-odtm.onrender.com/api
       - key: VITE_WS_URL
-        value: wss://backend.onrender.com/ws
+        value: wss://backend-odtm.onrender.com/ws
 
 databases:
   - name: eme-db
