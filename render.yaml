@@ -37,9 +37,8 @@ services:
           property: port
 
   # === Frontend: Vite + Vue 3 (SPA) ===
-  - type: web
+  - type: static_site
     name: frontend
-    env: static
     buildCommand: npm run build
     staticPublishPath: dist
     pullRequestPreviewsEnabled: true
