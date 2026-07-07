@@ -4,6 +4,7 @@ services:
     name: backend
     env: docker
     dockerfilePath: ./backend/Dockerfile.backend
+    dockerContext: ./backend
     plan: free
     envVars:
       - key: DJANGO_SECRET_KEY
